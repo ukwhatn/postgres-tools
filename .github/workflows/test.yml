@@ -1,0 +1,73 @@
+name: Test Docker Images
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: --debug
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ビルドキャッシュをプル
+      - name: Pull build cache
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/psql-base:buildcache || true
+          docker pull ghcr.io/${{ github.repository_owner }}/psql-migrator:buildcache || true
+          docker pull ghcr.io/${{ github.repository_owner }}/psql-dumper:buildcache || true
+
+      # 通常のmake build-allを使用してビルド
+      - name: Build images
+        run: make build-all
+
+      # テストを実行
+      - name: Run tests
+        run: |
+          export MIGRATOR_IMAGE="ghcr.io/${{ github.repository_owner }}/psql-migrator:latest"
+          export DUMPER_IMAGE="ghcr.io/${{ github.repository_owner }}/psql-dumper:latest"
+          ./test/run_tests.sh --use-local
+
+      # 失敗時のデバッグ情報
+      - name: Show container logs (on failure)
+        if: failure()
+        run: |
+          echo "==== POSTGRES LOGS ===="
+          docker logs test-postgres || true
+          echo "==== MINIO LOGS ===="
+          docker logs test-minio || true
+          echo "==== MC LOGS ===="
+          docker logs test-mc || true
+          echo "==== MIGRATOR LOGS ===="
+          docker logs test-migrator || true
+          echo "==== DUMPER LOGS ===="
+          docker logs test-dumper || true
+          echo "==== CONTAINER STATUS ===="
+          docker ps -a || true
+          
+      # テストログの保存
+      - name: Archive test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: |
+            /tmp/before_restore.txt
+            /tmp/after_restore.txt
+          retention-days: 5

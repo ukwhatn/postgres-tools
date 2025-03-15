@@ -1,8 +1,13 @@
 name: Build and Push Docker Images
 
 on:
-  push:
-    branches: [ main ]
+  # テストワークフローの完了後に実行
+  workflow_run:
+    workflows: ["Test Docker Images"]
+    branches: [main]
+    types: 
+      - completed
+  # 手動実行用
   workflow_dispatch:
     inputs:
       version:
@@ -13,6 +18,8 @@ on:
 jobs:
   # 1. 並列ビルド設定 - 各イメージを別々のジョブで並列ビルド
   prepare:
+    # workflow_runトリガーの場合、テストが成功した場合のみ実行
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.value }}

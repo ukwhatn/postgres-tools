@@ -8,8 +8,8 @@ RUN poetry install --no-interaction --only db
 
 # Copy Alembic configuration
 COPY alembic/alembic.ini ./alembic.ini
-COPY alembic/env.py ./alembic/env.py
-COPY alembic/script.py.mako ./alembic/script.py.mako
+COPY alembic/env.py ./migrations/env.py
+COPY alembic/script.py.mako ./migrations/script.py.mako
 
 # Create and set permissions for versions directory
 RUN mkdir -p /app/alembic/versions
@@ -20,7 +20,7 @@ RUN chown nonroot:nonroot /entrypoint.sh
 USER nonroot
 
 # Mount versions directory
-VOLUME ["/app/alembic/versions"]
+VOLUME ["/app/migrations/versions"]
 
 # Run entrypoint script
 ENTRYPOINT ["/entrypoint.sh"]

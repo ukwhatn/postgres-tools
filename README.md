@@ -1,8 +1,8 @@
-# PostgreSQL ツール
+# postgres-tools
 
-PostgreSQLデータベース管理のためのコンテナ化ツール集。マイグレーションとバックアップのソリューションを含みます。
+[fastapi-template](https://github.com/ukwhatn/fastapi-template) および [pycord-template](https://github.com/ukwhatn/pycord-template) で使用するためのPostgreSQLツールイメージ
 
-## 利用可能なイメージ
+## イメージ
 
 ### psql-migrator
 
@@ -78,13 +78,75 @@ docker run -it --rm \
   -e DUMPER_MODE=interactive \
   ghcr.io/ukwhatn/psql-dumper:latest
 
-# 1回限りのバックアップを作成
+# バックアップ作成を1回だけ実行
 docker run --rm \
   -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password \
   -e POSTGRES_HOST=db -e S3_ENDPOINT=https://s3.example.com \
   -e S3_ACCESS_KEY=key -e S3_SECRET_KEY=secret \
   -e S3_BUCKET=backups -e BACKUP_DIR=mydb \
   ghcr.io/ukwhatn/psql-dumper:latest custom python dump.py oneshot
+```
+
+## Docker Compose での使用例
+
+```yaml
+services:
+  db-migrator:
+    container_name: project-db-migrator
+    image: ghcr.io/ukwhatn/psql-migrator:latest
+    volumes:
+      - ./migrations/versions:/app/alembic/versions
+    env_file:
+      - ./envs/db.env
+    environment:
+      - POSTGRES_HOST=db
+    restart: no
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db
+
+  db-dumper:
+    container_name: project-db-dumper
+    image: ghcr.io/ukwhatn/psql-dumper:latest
+    env_file:
+      - ./envs/db.env
+      - ./envs/sentry.env
+      - ./envs/aws-s3.env
+    environment:
+      - POSTGRES_HOST=db
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db
+```
+
+### env ファイルの例
+
+#### db.env
+```
+POSTGRES_USER=user
+POSTGRES_PASSWORD=password
+POSTGRES_DB=main
+```
+
+#### sentry.env
+```
+SENTRY_DSN=https://your-sentry-dsn
+```
+
+#### aws-s3.env
+```
+S3_ENDPOINT=https://s3.example.com
+S3_ACCESS_KEY=your-access-key
+S3_SECRET_KEY=your-secret-key
+S3_BUCKET=backups
+BACKUP_DIR=project-db
+BACKUP_RETENTION_DAYS=30
+BACKUP_TIME=03:00
 ```
 
 ## 開発

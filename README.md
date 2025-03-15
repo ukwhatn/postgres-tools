@@ -19,19 +19,19 @@ Alembicを使用したデータベースマイグレーション管理ツール�
 
 ```bash
 # マイグレーションを実行
-docker run --rm -v /path/to/versions:/app/alembic/versions \
+docker run --rm -v /path/to/versions:/app/versions \
   -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password \
   -e POSTGRES_HOST=db \
   ghcr.io/ukwhatn/psql-migrator:latest
 
 # マイグレーションファイルを生成
-docker run --rm -v /path/to/versions:/app/alembic/versions \
+docker run --rm -v /path/to/versions:/app/versions \
   -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password \
   -e POSTGRES_HOST=db \
   ghcr.io/ukwhatn/psql-migrator:latest generate "新しいテーブルの追加"
 
 # カスタムコマンドを実行
-docker run --rm -v /path/to/versions:/app/alembic/versions \
+docker run --rm -v /path/to/versions:/app/versions \
   -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password \
   -e POSTGRES_HOST=db \
   ghcr.io/ukwhatn/psql-migrator:latest custom alembic history
@@ -95,7 +95,7 @@ services:
     container_name: project-db-migrator
     image: ghcr.io/ukwhatn/psql-migrator:latest
     volumes:
-      - ./migrations/versions:/app/alembic/versions
+      - ./versions:/app/versions
     env_file:
       - ./envs/db.env
     environment:

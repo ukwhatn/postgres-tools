@@ -12,7 +12,7 @@ COPY alembic/env.py ./migrations/env.py
 COPY alembic/script.py.mako ./migrations/script.py.mako
 
 # Create and set permissions for versions directory
-RUN mkdir -p /app/alembic/versions
+RUN mkdir -p /app/versions
 RUN chown -R nonroot:nonroot /app
 RUN chown nonroot:nonroot /entrypoint.sh
 
@@ -20,7 +20,7 @@ RUN chown nonroot:nonroot /entrypoint.sh
 USER nonroot
 
 # Mount versions directory
-VOLUME ["/app/migrations/versions"]
+VOLUME ["/app/versions"]
 
 # Run entrypoint script
 ENTRYPOINT ["/entrypoint.sh"]

@@ -1,0 +1,89 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag for the images'
+        required: false
+        default: ''
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+          fi
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/psql-base
+            ghcr.io/${{ github.repository_owner }}/psql-migrator
+            ghcr.io/${{ github.repository_owner }}/psql-dumper
+
+      - name: Build and push base image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/base.Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/psql-base:latest
+            ghcr.io/${{ github.repository_owner }}/psql-base:${{ env.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push migrator image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/migrator.Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/psql-migrator:latest
+            ghcr.io/${{ github.repository_owner }}/psql-migrator:${{ env.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push dumper image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/dumper.Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/psql-dumper:latest
+            ghcr.io/${{ github.repository_owner }}/psql-dumper:${{ env.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -9,10 +9,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 
-import boto3
+import opendal
 import schedule
 import sentry_sdk
-from botocore.exceptions import ClientError
 from pick import pick
 
 # ロガー初期化
@@ -32,7 +31,7 @@ if "SENTRY_DSN" in os.environ:
     )
     logger.info("Sentry initialized")
 
-# S3設定
+# ストレージ設定
 S3_ENDPOINT = os.environ.get("S3_ENDPOINT")
 S3_ACCESS_KEY = os.environ.get("S3_ACCESS_KEY")
 S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY")
@@ -53,56 +52,53 @@ DB_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "password")
 DB_PORT = os.environ.get("POSTGRES_PORT", "5432")
 
 
-def get_s3_client():
-    """S3クライアントを取得（S3互換ストレージにも対応）"""
-    return boto3.client(
+def get_storage_operator():
+    """ストレージオペレータを取得（S3互換ストレージにも対応）"""
+    return opendal.Operator(
         "s3",
-        endpoint_url=S3_ENDPOINT,
-        aws_access_key_id=S3_ACCESS_KEY,
-        aws_secret_access_key=S3_SECRET_KEY,
+        bucket=S3_BUCKET,
+        endpoint=S3_ENDPOINT,
+        access_key_id=S3_ACCESS_KEY,
+        secret_access_key=S3_SECRET_KEY,
+        region="auto",
+        root="/",
     )
 
 
-def ensure_backup_directory(s3_client):
+def ensure_backup_directory(op: opendal.Operator):
     """バックアップディレクトリの存在確認と作成"""
     try:
         # ディレクトリの存在確認
-        s3_client.head_object(Bucket=S3_BUCKET, Key=f"{BACKUP_DIR}/")
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "404":
+        exists = op.exists(f"{BACKUP_DIR}/")
+        if not exists:
             # ディレクトリが存在しない場合、空のオブジェクトを作成してディレクトリとする
             try:
-                s3_client.put_object(Bucket=S3_BUCKET, Key=f"{BACKUP_DIR}/")
+                op.create_dir(f"{BACKUP_DIR}/")
                 logger.info(f"Created backup directory: {BACKUP_DIR}/")
             except Exception as create_error:
                 if "SENTRY_DSN" in os.environ:
                     sentry_sdk.capture_exception(create_error)
                 logger.error(f"Error creating backup directory: {str(create_error)}")
                 raise
-        else:
-            if "SENTRY_DSN" in os.environ:
-                sentry_sdk.capture_exception(e)
-            logger.error(f"Error checking backup directory: {str(e)}")
-            raise
+    except Exception as e:
+        if "SENTRY_DSN" in os.environ:
+            sentry_sdk.capture_exception(e)
+        logger.error(f"Error checking backup directory: {str(e)}")
+        raise
 
 
-def list_backup_files(s3_client) -> List[str]:
+def list_backup_files(op) -> List[str]:
     """バックアップファイルの一覧を取得"""
     backup_files = []
     try:
-        paginator = s3_client.get_paginator("list_objects_v2")
-        for page in paginator.paginate(
-            Bucket=S3_BUCKET, Prefix=f"{BACKUP_DIR}/backup_"
-        ):
-            if "Contents" not in page:
-                continue
-
-            for obj in page["Contents"]:
-                filename = obj["Key"]
-                if filename.startswith(f"{BACKUP_DIR}/backup_") and filename.endswith(
-                    ".sql"
-                ):
-                    backup_files.append(filename)
+        # OpenDAL のリスト機能を使用
+        entries = op.scan(f"{BACKUP_DIR}/")
+        for entry in entries:
+            filename = entry.path
+            if filename.startswith(f"{BACKUP_DIR}/backup_") and filename.endswith(
+                ".sql"
+            ):
+                backup_files.append(filename)
 
         # 日付順に並び替え（新しい順）
         backup_files.sort(reverse=True)
@@ -115,40 +111,32 @@ def list_backup_files(s3_client) -> List[str]:
     return backup_files
 
 
-def list_old_backups(s3_client) -> List[str]:
+def list_old_backups(op) -> List[str]:
     """指定した日数より古いバックアップを一覧取得"""
     cutoff_date = datetime.now() - timedelta(days=BACKUP_RETENTION_DAYS)
     old_backups = []
 
     try:
         # 指定されたディレクトリ内のオブジェクトを取得
-        paginator = s3_client.get_paginator("list_objects_v2")
-        for page in paginator.paginate(
-            Bucket=S3_BUCKET, Prefix=f"{BACKUP_DIR}/backup_"
-        ):
-            if "Contents" not in page:
-                continue
-
-            for obj in page["Contents"]:
-                filename = ""
-                try:
-                    filename = obj["Key"]
-                    # バックアップファイルのみを対象とする
-                    if not filename.startswith(f"{BACKUP_DIR}/backup_"):
-                        continue
-
-                    date_str = filename.split("_")[1]
-                    file_date = datetime.strptime(date_str, "%Y%m%d")
-
-                    if file_date < cutoff_date:
-                        old_backups.append(filename)
-                except (IndexError, ValueError) as e:
-                    if "SENTRY_DSN" in os.environ:
-                        sentry_sdk.capture_exception(e)
-                    logger.error(
-                        f"Warning: Could not parse date from filename: {filename}"
-                    )
+        entries = op.scan(f"{BACKUP_DIR}/")
+        for entry in entries:
+            filename = ""
+            try:
+                filename = entry.path
+                # バックアップファイルのみを対象とする
+                if not filename.startswith(f"{BACKUP_DIR}/backup_"):
                     continue
+
+                date_str = filename.split("_")[1]
+                file_date = datetime.strptime(date_str, "%Y%m%d")
+
+                if file_date < cutoff_date:
+                    old_backups.append(filename)
+            except (IndexError, ValueError) as e:
+                if "SENTRY_DSN" in os.environ:
+                    sentry_sdk.capture_exception(e)
+                logger.error(f"Warning: Could not parse date from filename: {filename}")
+                continue
 
     except Exception as e:
         if "SENTRY_DSN" in os.environ:
@@ -158,16 +146,14 @@ def list_old_backups(s3_client) -> List[str]:
     return old_backups
 
 
-def delete_old_backups(s3_client, old_backups: List[str]):
+def delete_old_backups(op, old_backups: List[str]):
     """古いバックアップを削除"""
     if not old_backups:
         return
 
     try:
-        objects_to_delete = [{"Key": key} for key in old_backups]
-        s3_client.delete_objects(
-            Bucket=S3_BUCKET, Delete={"Objects": objects_to_delete}
-        )
+        for key in old_backups:
+            op.delete(key)
         logger.info(f"Deleted {len(old_backups)} old backup(s) from {BACKUP_DIR}/")
     except Exception as e:
         if "SENTRY_DSN" in os.environ:
@@ -178,8 +164,8 @@ def delete_old_backups(s3_client, old_backups: List[str]):
 def select_backup_file() -> Optional[str]:
     """バックアップファイルを選択"""
     try:
-        s3_client = get_s3_client()
-        backup_files = list_backup_files(s3_client)
+        op = get_storage_operator()
+        backup_files = list_backup_files(op)
 
         if not backup_files:
             logger.error("No backup files found")
@@ -211,7 +197,7 @@ def select_backup_file() -> Optional[str]:
 
 
 def create_backup():
-    """バックアップを作成してS3にアップロード"""
+    """バックアップを作成してストレージにアップロード"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     # 安全な一時ディレクトリを使用
     backup_file = Path(tempfile.gettempdir()) / f"backup_{timestamp}.sql"
@@ -248,22 +234,23 @@ def create_backup():
             logger.error(f"pg_dump output: {e.stdout}")
             raise e
 
-        # S3クライアントの初期化
-        s3_client = get_s3_client()
+        # ストレージオペレータの初期化
+        op = get_storage_operator()
 
         # バックアップディレクトリの確認/作成
-        ensure_backup_directory(s3_client)
+        ensure_backup_directory(op)
 
-        # S3にアップロード
+        # ファイルをアップロード
         s3_key = f"{BACKUP_DIR}/backup_{timestamp}.sql"
-        s3_client.upload_file(backup_file_str, S3_BUCKET, s3_key)
+        with open(backup_file_str, "rb") as f:
+            op.write(s3_key, f.read())
 
         logger.info(f"Backup completed successfully: {s3_key}")
 
         # 古いバックアップの削除
-        old_backups = list_old_backups(s3_client)
+        old_backups = list_old_backups(op)
         if old_backups:
-            delete_old_backups(s3_client, old_backups)
+            delete_old_backups(op, old_backups)
 
         # 一時ファイルを削除
         os.remove(backup_file_str)
@@ -275,6 +262,7 @@ def create_backup():
         if "SENTRY_DSN" in os.environ:
             sentry_sdk.capture_exception(e)
         logger.error(f"Backup failed: {str(e)}")
+        raise e
 
 
 def restore_backup(backup_file: str):
@@ -285,10 +273,12 @@ def restore_backup(backup_file: str):
     local_file_str = str(local_file)
 
     try:
-        # S3からファイルをダウンロード
-        s3_client = get_s3_client()
+        # ストレージからファイルをダウンロード
+        op = get_storage_operator()
         logger.info(f"Downloading backup file: {backup_file}")
-        s3_client.download_file(S3_BUCKET, backup_file, local_file_str)
+        with open(local_file_str, "wb") as f:
+            data = op.read(backup_file)
+            f.write(data)
 
         # データベースに接続してリストアを実行
         logger.info("Starting database restore...")
@@ -391,17 +381,27 @@ def list_backups():
         print("Storage credentials or bucket not configured, cannot list backups")
         return
 
-    s3_client = get_s3_client()
+    op = get_storage_operator()
     try:
-        response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix=f"{BACKUP_DIR}/")
+        entries = op.scan(f"{BACKUP_DIR}/")
 
-        if "Contents" in response:
+        # 最新のエントリから10件取得
+        backup_entries = []
+        for entry in entries:
+            if entry.path.startswith(f"{BACKUP_DIR}/backup_") and entry.path.endswith(
+                ".sql"
+            ):
+                stat = op.stat(entry.path)
+                backup_entries.append((entry.path, stat))
+
+        # 日付でソート（新しい順）
+        backup_entries.sort(key=lambda x: x[1].last_modified, reverse=True)
+
+        if backup_entries:
             print("\nRecent backups:")
-            for obj in sorted(
-                response["Contents"], key=lambda x: x["LastModified"], reverse=True
-            )[:10]:
-                size_mb = obj["Size"] / (1024 * 1024)
-                print(f"{obj['Key']} - {obj['LastModified']} - {size_mb:.2f} MB")
+            for key, stat in backup_entries[:10]:
+                size_mb = stat.content_length / (1024 * 1024)
+                print(f"{key} - {stat.last_modified} - {size_mb:.2f} MB")
             print()
         else:
             print("No backups found\n")
@@ -482,10 +482,10 @@ def main():
         if filename:
             restore_backup(filename)
             # 削除
-            s3_client = get_s3_client()
-            s3_client.delete_object(Bucket=S3_BUCKET, Key=filename)
+            op = get_storage_operator()
+            op.delete(filename)
             # 作成したディレクトリも削除
-            s3_client.delete_object(Bucket=S3_BUCKET, Key=f"{BACKUP_DIR}/")
+            op.delete(f"{BACKUP_DIR}/")
         logger.info("Test completed")
     else:
         # 環境変数からモードを決定

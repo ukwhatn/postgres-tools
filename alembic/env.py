@@ -22,6 +22,7 @@ fileConfig(config.config_file_name)
 
 # Migratorモードではモデルが不要なので、空のメタデータを設定
 from sqlalchemy.schema import MetaData
+
 target_metadata = MetaData()
 
 # other values from the config, defined by the needs of env.py,

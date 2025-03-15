@@ -11,18 +11,40 @@ on:
         default: ''
 
 jobs:
-  build-and-push:
+  # 1. 並列ビルド設定 - 各イメージを別々のジョブで並列ビルド
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "value=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "value=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+          fi
+
+  build-base:
+    runs-on: ubuntu-latest
+    needs: prepare
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. ビルドキャッシュの最適化
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          # ビルダーインスタンスの設定強化
+          buildkitd-flags: --debug
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -31,24 +53,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Determine version
-        id: version
-        run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
-          fi
-
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ghcr.io/${{ github.repository_owner }}/psql-base
-            ghcr.io/${{ github.repository_owner }}/psql-migrator
-            ghcr.io/${{ github.repository_owner }}/psql-dumper
-
+      # 3. multi-stageビルドの最適化 - キャッシュマウントと依存関係の分離
       - name: Build and push base image
         uses: docker/build-push-action@v5
         with:
@@ -58,9 +63,42 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/${{ github.repository_owner }}/psql-base:latest
-            ghcr.io/${{ github.repository_owner }}/psql-base:${{ env.VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ghcr.io/${{ github.repository_owner }}/psql-base:${{ needs.prepare.outputs.version }}
+          cache-from: |
+            type=gha,scope=base-image
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/psql-base:buildcache
+          cache-to: |
+            type=gha,scope=base-image,mode=max
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/psql-base:buildcache,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+          # ビルドの進行状況の詳細表示
+          outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Base PostgreSQL tools image
+
+  build-migrator:
+    runs-on: ubuntu-latest
+    needs: [prepare, build-base]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: --debug
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push migrator image
         uses: docker/build-push-action@v5
@@ -71,9 +109,41 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/${{ github.repository_owner }}/psql-migrator:latest
-            ghcr.io/${{ github.repository_owner }}/psql-migrator:${{ env.VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ghcr.io/${{ github.repository_owner }}/psql-migrator:${{ needs.prepare.outputs.version }}
+          cache-from: |
+            type=gha,scope=migrator-image
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/psql-migrator:buildcache
+          cache-to: |
+            type=gha,scope=migrator-image,mode=max
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/psql-migrator:buildcache,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+          outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=PostgreSQL migrator tool image
+
+  build-dumper:
+    runs-on: ubuntu-latest
+    needs: [prepare, build-base]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: --debug
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push dumper image
         uses: docker/build-push-action@v5
@@ -84,6 +154,13 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/${{ github.repository_owner }}/psql-dumper:latest
-            ghcr.io/${{ github.repository_owner }}/psql-dumper:${{ env.VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ghcr.io/${{ github.repository_owner }}/psql-dumper:${{ needs.prepare.outputs.version }}
+          cache-from: |
+            type=gha,scope=dumper-image
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/psql-dumper:buildcache
+          cache-to: |
+            type=gha,scope=dumper-image,mode=max
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/psql-dumper:buildcache,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+          outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=PostgreSQL dumper tool image

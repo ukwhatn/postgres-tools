@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "postgres-tools"
+version = "0.1.0"
+description = "PostgreSQL database tools for migration and backup"
+authors = ["Yuki Watanabe <ukwhatn@gmail.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+
+[tool.poetry.group.dev]
+optional = true
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.11.0"
+bandit = "^1.7.8"
+semgrep = "^1.63.0"
+
+[tool.poetry.group.db]
+optional = true
+[tool.poetry.group.db.dependencies]
+sqlalchemy = "^2.0.32"
+alembic = "^1.13.2"
+psycopg2-binary = "^2.9.9"
+
+[tool.poetry.group.dumper]
+optional = true
+
+[tool.poetry.group.dumper.dependencies]
+boto3 = "1.35.*"
+schedule = "^1.2.2"
+sentry-sdk = "^2.19.2"
+pick = "^2.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

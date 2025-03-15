@@ -14,12 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: pull exist images
-        run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/psql-base:latest
-          docker pull ghcr.io/${{ github.repository_owner }}/psql-migrator:latest
-          docker pull ghcr.io/${{ github.repository_owner }}/psql-dumper:latest
-
       # 通常のmake build-allを使用してビルド
       - name: Build images
         run: make build-all

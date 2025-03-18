@@ -96,6 +96,7 @@ services:
     image: ghcr.io/ukwhatn/psql-migrator:latest
     volumes:
       - ./versions:/app/versions
+      - ./app/db/models:/app/migrations/models # dev環境だけで良い
     env_file:
       - ./envs/db.env
     environment:

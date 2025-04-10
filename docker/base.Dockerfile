@@ -1,6 +1,6 @@
 # 3. multi-stageビルドの最適化
 # ベースステージ（システム依存パッケージとツール）
-FROM python:3.13.2-slim AS system-deps
+FROM python:3.13.3-slim AS system-deps
 
 # 環境変数設定
 ENV PYTHONDONTWRITEBYTECODE=1

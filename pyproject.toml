@@ -11,7 +11,7 @@ python = "^3.13"
 [tool.poetry.group.dev]
 optional = true
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.11.0"
+ruff = "^0.15.12"
 bandit = "^1.7.8"
 semgrep = "^1.63.0"
 

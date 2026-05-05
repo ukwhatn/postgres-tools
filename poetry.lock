@@ -906,36 +906,50 @@ files = [
 
 [[package]]
 name = "opendal"
-version = "0.45.17"
+version = "0.47.1"
 description = "Apache OpenDAL™ Python Binding"
 optional = false
 python-versions = ">=3.10"
 groups = ["dumper"]
 files = [
-    {file = "opendal-0.45.17-cp310-cp310-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:e0ac8c5e310b5e8a801b588a3e6821dc7e69d69ef53886dc7e52dfc8dcfb0dd5"},
-    {file = "opendal-0.45.17-cp310-cp310-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:cec05fcb42c2e17ecccb6e4c760e722d050424f169060a845a3298c667b2f973"},
-    {file = "opendal-0.45.17-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6cd9d19a7a67ac6f3aed21504c53d731e6b7ca762a916a59e1ec92d3059afec5"},
-    {file = "opendal-0.45.17-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:460b56b92310f5f38ee64fa9fae2a417c97eee55c5bdde304f6ec55f9112599e"},
-    {file = "opendal-0.45.17-cp310-cp310-win_amd64.whl", hash = "sha256:aae4d8c7b55e477eb37e008c23553face84c6c1f7ccc569c9da29dfcf88b3898"},
-    {file = "opendal-0.45.17-cp311-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:6f7905b8506103ea4ffca7ffa3c4f9d0154981727660fe8891385c236d7ebff2"},
-    {file = "opendal-0.45.17-cp311-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:4ad896559bb40482b6e17b10b5f61771734c86ea8d42733bc0d815122fdf30d1"},
-    {file = "opendal-0.45.17-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4e78c8bc29c373b943cfc18f0ac2aba5b5f7252491237598e93b2babb4d30a13"},
-    {file = "opendal-0.45.17-cp311-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:cf35aa4c133e3ad0f35e2583faa40c6e567ecb66f6ae99949ef613c11e5ce55e"},
-    {file = "opendal-0.45.17-cp311-abi3-win_amd64.whl", hash = "sha256:f48415f883b7469dc273c4580bd5adfd0a93d8cec9750596142a690ef31bb93e"},
-    {file = "opendal-0.45.17-cp313-cp313t-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:67f7bd1e6c109306220d5a0c80a47d130cd16bb7cd1b476cb15c5461d6925028"},
-    {file = "opendal-0.45.17-cp313-cp313t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:81e2937d4337bdb23d237b322f888605172363faa2485cb542d2a02a223fb25a"},
-    {file = "opendal-0.45.17-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:45e84b0ee7f2824ae215ab5f4d8446b5a7a95887eac9caaaad81f9c0f870645a"},
-    {file = "opendal-0.45.17-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:49713358d04eae5ab3afa13f567debee80e6dd3775dc4e0e76946f0bc3c033af"},
-    {file = "opendal-0.45.17-cp313-cp313t-win_amd64.whl", hash = "sha256:9859df2c8868981eabcd51f6d0bf1763c3e707704e7a6325d38caa58fc523d7f"},
-    {file = "opendal-0.45.17.tar.gz", hash = "sha256:9985840087a097ead8ba5a1146ecfc1b337f62baa606ffe715b74ce523d192ee"},
+    {file = "opendal-0.47.1-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:5c8db531924b6904955c09d8883e8e1a96a75a2cfa97a3c4bb930281193603eb"},
+    {file = "opendal-0.47.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:99d3f6b137cf7307af6a59ccc35706351e971aa22ead8b38fe77d5e5a6c836f1"},
+    {file = "opendal-0.47.1-cp310-cp310-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:d661045a76fefdcd4449e0f07fc16652255868188d16ed85d0aa56783b1a046f"},
+    {file = "opendal-0.47.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ca999da8a4ebe21c722b516f43cdf691f710dc31649bb10feffc0163698e80ca"},
+    {file = "opendal-0.47.1-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:c8af2047508c7b2a94c1f543c5537646206fd22af801e3f874ae0b0001608aa2"},
+    {file = "opendal-0.47.1-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:f7e01b46ba5621d72c43bcec50b24c26d9bafd17de73a5febd1d478752adaeed"},
+    {file = "opendal-0.47.1-cp310-cp310-musllinux_1_1_armv7l.whl", hash = "sha256:1297d7529d15fc70021729de0a35a5da9342bd077cc5e848a19433a2ee1fb12e"},
+    {file = "opendal-0.47.1-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:0e6be23671ff06bd7266747a5b4b3aec83b2010e13b4153a68a80fa3213cbc2c"},
+    {file = "opendal-0.47.1-cp310-cp310-win_amd64.whl", hash = "sha256:20f6f11da957cd95421fecb7a1fde41b11b6274bfc23b0e6ffed5013d722bd75"},
+    {file = "opendal-0.47.1-cp311-abi3-macosx_10_12_x86_64.whl", hash = "sha256:82e848e2e9e1b8407120e8bd020de783a4248fbbf049f391644fc74c93a67051"},
+    {file = "opendal-0.47.1-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:c678036551d957895578b00f8ab9a6317fcc702439e891ccfa868c56c8373d97"},
+    {file = "opendal-0.47.1-cp311-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:5431625e597827da5961b3c17230513be61dd58f1053b1310a7a207123696956"},
+    {file = "opendal-0.47.1-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:de74b280c41024739e1b96006660041f5d85e6b1813ecec7df5552e3e22ebea2"},
+    {file = "opendal-0.47.1-cp311-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:dc89730216f48edec808a0dd162164bb7a458931b496befcb0c860ad693f4fcf"},
+    {file = "opendal-0.47.1-cp311-abi3-musllinux_1_1_aarch64.whl", hash = "sha256:4ff0d29358435681ebb1c7fb4fadbc113ca9af138014ad7b6ac65d92de9ffa03"},
+    {file = "opendal-0.47.1-cp311-abi3-musllinux_1_1_armv7l.whl", hash = "sha256:49f312533fc76acbd3bc0040c114584c0e0e7661f62e0e522efa0825eacbbc8e"},
+    {file = "opendal-0.47.1-cp311-abi3-musllinux_1_1_x86_64.whl", hash = "sha256:05f36d4a3f464401440d89d415fb5cd604fbefad0c5ac408bbcc1f0f736cff84"},
+    {file = "opendal-0.47.1-cp311-abi3-win_amd64.whl", hash = "sha256:fa2e403e7f86f57164181d1d0f4b59afc77997f89cdeeab883591622b99bda29"},
+    {file = "opendal-0.47.1-cp313-cp313t-macosx_10_12_x86_64.whl", hash = "sha256:16e6168054d685cee37079696ded71cdb4edce27b98e4a3b2cd06004f3c646f1"},
+    {file = "opendal-0.47.1-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:b7a60a20a314e21854675d4e92ac440bd7d578731b2d4051fba939b3c8514968"},
+    {file = "opendal-0.47.1-cp313-cp313t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:29d318e41a2523138318cc7868fda9da5534f938bb5a0bc1d677b16270acd07b"},
+    {file = "opendal-0.47.1-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7abbd8f5b0ce9107f9ca747dceb98e43bf2ff244b59b6b4d50195e024c726aad"},
+    {file = "opendal-0.47.1-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:204d17e5f533268c15565e316ac10b57980583f31ebf68d08d2238cf077a7348"},
+    {file = "opendal-0.47.1-cp313-cp313t-musllinux_1_1_aarch64.whl", hash = "sha256:d7b9d312eae9dd79af92a09dbd69758b15772061747d3310da64d42f483b9d4a"},
+    {file = "opendal-0.47.1-cp313-cp313t-musllinux_1_1_armv7l.whl", hash = "sha256:bfa5c82f129b5d2e66abbdf678365baf29b6bb4de0df4c59c746187c51618f72"},
+    {file = "opendal-0.47.1-cp313-cp313t-musllinux_1_1_x86_64.whl", hash = "sha256:74f31918290e88853da9983ca96fdfc7a0d01ebdd6fdfa46942cb223ed275158"},
+    {file = "opendal-0.47.1-cp313-cp313t-win_amd64.whl", hash = "sha256:27350a385aeab80cafaeb982bcaa055df263ab87571f27c99b8c783c12ccb03a"},
+    {file = "opendal-0.47.1-cp314-cp314t-macosx_10_12_x86_64.whl", hash = "sha256:634b4c56ff8616497462b01fbc754e6bcb924f56d66de1f63c55fdd81d4f9e9c"},
+    {file = "opendal-0.47.1-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:cdd9e9eb0dadf040b398e8a041e4359abaf91000d6fac3d2013795db42b11e42"},
+    {file = "opendal-0.47.1-cp314-cp314t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:ee9a88bb2f78ea33f44f042fcc40cb0a0f51c0492b02fcc2dac8448dade0fc72"},
+    {file = "opendal-0.47.1-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3ac5817090c7da4d074226250abea3c612f4ddaa91e4d255e7589c9143a38107"},
+    {file = "opendal-0.47.1-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:e7e9049ba876638a17c6648609d177d837e3e20c9417370af5987f2b09e06f69"},
+    {file = "opendal-0.47.1-cp314-cp314t-musllinux_1_1_aarch64.whl", hash = "sha256:59d20c6a65ecd80635fd415a6131f93e616e84cba6318506339912b6ccae0461"},
+    {file = "opendal-0.47.1-cp314-cp314t-musllinux_1_1_armv7l.whl", hash = "sha256:57352f79efcb612dd49854e1057fe766667cd230dab99d952e4069821a6c8fdb"},
+    {file = "opendal-0.47.1-cp314-cp314t-musllinux_1_1_x86_64.whl", hash = "sha256:166535032b768017289a7dc1d6820220f37b0d2a79881271b48a961a14a1f4b7"},
+    {file = "opendal-0.47.1-cp314-cp314t-win_amd64.whl", hash = "sha256:9bcc6ba8672e3cf6d718b1bf931c418c53ae7a6ec529b124477827820bee03bc"},
+    {file = "opendal-0.47.1.tar.gz", hash = "sha256:b3b9a7f056ed5bddb142c54bbf9618125e6f864ed53d35d91fad9823960e39e7"},
 ]
-
-[package.extras]
-benchmark = ["boto3 (>=1.37.9)", "boto3-stubs[essential] (>=1.37.9)", "gevent (>=24.11.1)", "greenify (>=0.4.3)", "greenlet (>=3.1.1)", "pydantic (>=2.10.6)"]
-dev = ["maturin (>=1.8.2)"]
-docs = ["pdoc (>=15.0.1)"]
-lint = ["ruff (>=0.9.10)"]
-test = ["pydantic-settings (>=2.8.1)", "pytest (>=8.3.5)", "pytest-asyncio (>=0.25.3)", "python-dotenv (>=1.0.1)"]
 
 [[package]]
 name = "opentelemetry-api"
@@ -2410,4 +2424,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "76613a9080a2d650f5c0316198a79d43998bc710d88bc6c0e61b8c990c7e500d"
+content-hash = "ee0debe939d6bb1b922bd1b840c842f1044f0df435226df4dc431afccf3236b9"
